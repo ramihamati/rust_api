@@ -1,10 +1,7 @@
-mod mongomanager;
-
-use std::fmt::Error;
-use actix_web::{get, post, web, App, HttpResponse, HttpServer, Responder};
-use mongodb::bson::Bson;
-use crate::mongomanager::{MongoConnectionSettings};
-use crate::mongomanager::MongoManager;
+mod MongoManager;
+mod MongoConnectionSettings;
+mod MongoCollection;
+use actix_web::{get,  App, HttpResponse, HttpServer, Responder};
 use serde::{ Deserialize, Serialize };
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -27,8 +24,8 @@ async fn main() -> std::io::Result<()> {
 
 #[get("/")]
 async fn hello() -> impl Responder {
-    let mongo = MongoManager::<Restaurant>::new(
-        MongoConnectionSettings::new(
+    let mongo = MongoManager::MongoManager::new(
+        MongoConnectionSettings::MongoConnectionSettings::new(
             String::from("mongodb://localhost:27017"),
             String::from("database"),
             String::from("table")
@@ -39,8 +36,9 @@ async fn hello() -> impl Responder {
         cuisine: "Greek".to_string(),
         borough: "Queens".to_string(),
     };
+    let collection = mongo.get_collection::<Restaurant>();
 
-    let result = mongo.insert(doc).await;
+    let result =collection.insert(doc).await;
     match result {
         Ok(id) => {
             println!("{}", id)
