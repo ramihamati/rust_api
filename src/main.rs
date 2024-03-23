@@ -3,8 +3,6 @@ mod MongoConnectionSettings;
 mod MongoCollection;
 mod Execute;
 mod CustomError;
-mod ProcessMaybe;
-
 use actix_web::{get,  App, HttpResponse, HttpServer, Responder};
 use serde::{ Deserialize, Serialize };
 
@@ -42,11 +40,13 @@ async fn hello() -> impl Responder {
     };
     let collection = mongo.get_collection::<Restaurant>();
 
-    let execute = Execute::Execute::New();
+    let result2 = collection.insert(doc).await;
 
-    let result2 = execute
-        .Process(collection.insert(doc).await);
-
+    result2.ChainWith(
+        fn (v) {
+            collection.insert(doc).await;
+        }
+    )
     match result {
         Ok(id) => {
             println!("{}", id)
